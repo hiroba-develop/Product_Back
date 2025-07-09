@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/.gradle
+    ports:
+      - "8081:8081"
+
+    # ← ここで Dockerfile の ENTRYPOINT をキャンセル
+    entrypoint: []
+    # ↓ 起動したいコマンドだけを書きます
+    command: ["java", "-jar", "/app/build/libs/Mietoru_Back-0.0.1-SNAPSHOT.jar"]
+
+    restart: always

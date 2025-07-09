@@ -1,0 +1,1066 @@
+openapi: 3.0.0
+info:
+  title: ミエトル API
+  description: ミエトル システムのAPI仕様書
+  version: 1.0.0
+
+tags:
+  - name: 認証
+    description: ユーザー認証関連のAPI
+  - name: タスク
+    description: タスク管理関連のAPI
+  - name: 設定
+    description: ユーザー設定関連のAPI
+  - name: 売上
+    description: 売上管理関連のAPI
+  - name: 利益
+    description: 利益管理関連のAPI
+  - name: 純利益
+    description: 純利益管理関連のAPI
+  - name: 税理士コメント
+    description: 税理士コメント関連のAPI
+  - name: 画面表示
+    description: 各画面の初期表示用API
+
+paths:
+  /api/auth/login:
+    get:
+      tags:
+        - 認証
+      summary: ユーザーログイン
+      description: ユーザーログイン時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          description: メールアドレス
+        - name: passwordHash
+          in: query
+          required: false
+          schema:
+            type: string
+          description: パスワードハッシュ（ローカルログイン時のみ）
+        - name: googleId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Google ID（Google SSOログイン時のみ）
+      responses:
+        "200":
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                    example: 1
+                  userId:
+                    type: string
+                    description: ユーザーID（UUID）
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                  settingFlg:
+                    type: string
+                    description: 設定フラグ（1:設定済み、0:未設定）
+                    example: 1
+                  role:
+                    type: string
+                    description: ロール（1:管理者、0:ユーザー）
+                    example: 1
+        "401":
+          description: 認証失敗
+
+  /api/auth/registration:
+    post:
+      tags:
+        - 認証
+      summary: ユーザー登録
+      description: ユーザー登録時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: メールアドレス
+                passwordHash:
+                  type: string
+                  description: パスワードハッシュ（ローカル登録時のみ）
+                googleId:
+                  type: string
+                  description: Google ID（Google SSO登録時のみ）
+      responses:
+        "200":
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                    example: 1
+                  userId:
+                    type: string
+                    description: ユーザーID（UUID）
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                  settingFlg:
+                    type: string
+                    description: 設定フラグ（1:設定済み、0:未設定）
+                    example: 1
+                  role:
+                    type: string
+                    description: ロール（1:管理者、0:ユーザー）
+                    example: 1
+
+  /api/auth/setup:
+    post:
+      tags:
+        - 認証
+      summary: 初期設定
+      description: 初期設定登録時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: ユーザーID（UUID）
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                name:
+                  type: string
+                  description: ユーザー名
+                  maxLength: 100
+                company:
+                  type: string
+                  description: 会社名
+                  maxLength: 200
+                telNo:
+                  type: string
+                  description: 電話番号
+                  maxLength: 20
+                companySize:
+                  type: integer
+                  description: |
+                    企業規模
+                    - 1: 個人事業主
+                    - 2: 法人(従業員1-5名)
+                    - 3: 法人(従業員6-20名)
+                    - 4: 法人(従業員21名以上)
+                industry:
+                  type: integer
+                  description: |
+                    業界
+                    - 1: IT・ソフトウェア
+                    - 2: 製造業
+                    - 3: 小売業
+                    - 4: 飲食業
+                    - 5: サービス業
+                    - 6: 建設業
+                    - 7: 医療・福祉
+                    - 8: 教育
+                    - 9: 金融・保険
+                    - 10: 不動産
+                    - 11: その他
+                fiscalYearStartYear:
+                  type: integer
+                  description: 事業年度開始年
+                fiscalYearStartMonth:
+                  type: integer
+                  description: 事業年度開始月（1-12）
+                  minimum: 1
+                  maximum: 12
+                totalAssets:
+                  type: integer
+                  description: 総資産
+                businessExperience:
+                  type: integer
+                  description: |
+                    事業経験年数
+                    - 1: 1年未満
+                    - 2: 1-3年未満
+                    - 3: 3-5年未満
+                    - 4: 5-10年未満
+                    - 5: 10年以上
+                financialKnowledge:
+                  type: integer
+                  description: |
+                    財務・会計の知識レベル
+                    - 1: 初心者
+                    - 2: 基本レベル
+                    - 3: 中級レベル
+                    - 4: 上級レベル
+      responses:
+        "200":
+          description: 設定成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                    example: 1
+
+  /api/auth/forgotPassword:
+    post:
+      tags:
+        - 認証
+      summary: パスワード再発行
+      description: パスワード再発行時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: メールアドレス
+      responses:
+        "200":
+          description: パスワード再発行成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（2:メールアドレスがDBに存在しない、1:成功、0:失敗）
+
+  /api/auth/resetPassword:
+    post:
+      tags:
+        - 認証
+      summary: パスワード再設定
+      description: パスワード再設定時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPasswordHash
+              properties:
+                token:
+                  type: string
+                  description: トークン
+                newPasswordHash:
+                  type: string
+                  description: 新しいパスワードハッシュ
+      responses:
+        "200":
+          description: 再設定成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+
+  /api/task/registration:
+    post:
+      tags:
+        - タスク
+      summary: タスク登録
+      description: タスク登録時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tasks
+              properties:
+                tasks:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Task"
+      responses:
+        "200":
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+
+  /api/task/update:
+    put:
+      tags:
+        - タスク
+      summary: タスク更新
+      description: タスク更新時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tasks
+              properties:
+                tasks:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Task"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+
+  /api/task/delete:
+    delete:
+      tags:
+        - タスク
+      summary: タスク削除
+      description: タスク削除時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      parameters:
+        - name: taskId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: タスクID（UUID）
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                    example: 1
+
+  /api/setting/update:
+    put:
+      tags:
+        - 設定
+      summary: 設定内容変更
+      description: 設定内容更新時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  description: ユーザーID（UUID）
+                name:
+                  type: string
+                  description: ユーザー名
+                  maxLength: 100
+                company:
+                  type: string
+                  description: 会社名
+                  maxLength: 200
+                telNo:
+                  type: string
+                  description: 電話番号
+                  maxLength: 20
+                companySize:
+                  type: integer
+                  description: 企業規模
+                industry:
+                  type: integer
+                  description: 業界
+                fiscalYearStartMonth:
+                  type: integer
+                  description: 事業年度開始月
+                totalAssets:
+                  type: integer
+                  description: 総資産
+                businessExperience:
+                  type: integer
+                  description: 事業経験年数
+                financialKnowledge:
+                  type: integer
+                  description: 財務・会計の知識レベル
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  userId:
+                    type: string
+                  name:
+                    type: string
+                  company:
+                    type: string
+                  telNo:
+                    type: string
+                  companySize:
+                    type: integer
+                  industry:
+                    type: integer
+                  fiscalYearStartYear:
+                    type: integer
+                  fiscalYearStartMonth:
+                    type: integer
+                  totalAssets:
+                    type: integer
+                  businessExperience:
+                    type: integer
+                  financialKnowledge:
+                    type: integer
+
+  /api/sale/update:
+    put:
+      tags:
+        - 売上
+      summary: 売上更新
+      description: 売上更新時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sales
+              properties:
+                sales:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Sale"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  sales:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sale"
+
+  /api/profit/update:
+    put:
+      tags:
+        - 利益
+      summary: 利益更新
+      description: 利益更新時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - profits
+              properties:
+                profits:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Profit"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  profits:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Profit"
+
+  /api/netAsset/update:
+    put:
+      tags:
+        - 純利益
+      summary: 純利益更新
+      description: 純利益更新時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - netAssets
+              properties:
+                netAssets:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/NetAsset"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  netAssets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NetAsset"
+
+  /api/taxAccountantComment/registration:
+    post:
+      tags:
+        - 税理士コメント
+      summary: 税理士コメント登録
+      description: 税理士コメント登録時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - taxAccountantComments
+              properties:
+                taxAccountantComments:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/TaxAccountantComment"
+      responses:
+        "200":
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  taxAccountantComments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TaxAccountantComment"
+
+  /api/dashboard:
+    get:
+      tags:
+        - 画面表示
+      summary: ダッシュボード画面初期表示
+      description: ダッシュボード画面初期表示時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ユーザーID（UUID）
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+                  sales:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sale"
+                  profits:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Profit"
+                  netAssets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NetAsset"
+                  taxAccountantComments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TaxAccountantComment"
+
+  /api/budgetActual:
+    get:
+      tags:
+        - 画面表示
+      summary: 予実管理画面初期表示
+      description: 予実管理画面初期表示時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ユーザーID（UUID）
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                  sales:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sale"
+                  profits:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Profit"
+                  netAssets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NetAsset"
+
+  /api/roadmap:
+    get:
+      tags:
+        - 画面表示
+      summary: ロードマップ設定画面初期表示
+      description: ロードマップ設定画面初期表示時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ユーザーID（UUID）
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                  sales:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sale"
+                  profits:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Profit"
+                  netAssets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NetAsset"
+
+  /api/setting:
+    get:
+      tags:
+        - 画面表示
+      summary: 設定画面初期表示
+      description: 設定画面初期表示時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ユーザーID（UUID）
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                    example: 1
+                  userId:
+                    type: string
+                    description: ユーザーID（UUID）
+                  name:
+                    type: string
+                    description: ユーザー名
+                    maxLength: 100
+                  company:
+                    type: string
+                    description: 会社名
+                    maxLength: 200
+                  telNo:
+                    type: string
+                    description: 電話番号
+                    maxLength: 20
+                  companySize:
+                    type: integer
+                    description: |
+                      企業規模
+                      - 1: 個人事業主
+                      - 2: 法人(従業員1-5名)
+                      - 3: 法人(従業員6-20名)
+                      - 4: 法人(従業員21名以上)
+                  industry:
+                    type: integer
+                    description: |
+                      業界
+                      - 1: IT・ソフトウェア
+                      - 2: 製造業
+                      - 3: 小売業
+                      - 4: 飲食業
+                      - 5: サービス業
+                      - 6: 建設業
+                      - 7: 医療・福祉
+                      - 8: 教育
+                      - 9: 金融・保険
+                      - 10: 不動産
+                      - 11: その他
+                  fiscalYearStartYear:
+                    type: integer
+                    description: 事業年度開始年
+                  fiscalYearStartMonth:
+                    type: integer
+                    description: 事業年度開始月（1-12）
+                    minimum: 1
+                    maximum: 12
+                  totalAssets:
+                    type: integer
+                    description: 総資産
+                  businessExperience:
+                    type: integer
+                    description: |
+                      事業経験年数
+                      - 1: 1年未満
+                      - 2: 1-3年未満
+                      - 3: 3-5年未満
+                      - 4: 5-10年未満
+                      - 5: 10年以上
+                  financialKnowledge:
+                    type: integer
+                    description: |
+                      財務・会計の知識レベル
+                      - 1: 初心者
+                      - 2: 基本レベル
+                      - 3: 中級レベル
+                      - 4: 上級レベル
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+
+  /api/taxAccountant:
+    get:
+      tags:
+        - 画面表示
+      summary: クライアント管理画面初期表示
+      description: クライアント管理画面初期設定時使用。responseStatusは成功時に1を返却、失敗時は0を返却
+      responses:
+        "200":
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseStatus:
+                    type: integer
+                    description: レスポンスステータス（1:成功、0:失敗）
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminUserInfo"
+
+components:
+  schemas:
+    ResponseStatus:
+      type: object
+      properties:
+        responseStatus:
+          type: integer
+          description: レスポンスステータス（1:成功、0:失敗）
+          example: 1
+
+    Task:
+      type: object
+      properties:
+        taskId:
+          type: string
+          description: タスクID（UUID）
+        userId:
+          type: string
+          description: ユーザーID（UUID）
+        taskName:
+          type: string
+          description: タスク名
+        notificationCompleted:
+          type: string
+          description: タスクの未完了・完了（0:未完了、1:完了）
+        notificationEnabled:
+          type: string
+          description: タスク通知の有効・無効（0:通知なし、1:通知あり）
+        notificationDay:
+          type: integer
+          description: タスク通知日（1-31）
+          minimum: 1
+          maximum: 31
+
+    Sale:
+      type: object
+      properties:
+        saleId:
+          type: string
+          description: 売上ID（UUID）
+        userId:
+          type: string
+          description: ユーザーID（UUID）
+        year:
+          type: integer
+          description: 対象年
+        month:
+          type: integer
+          description: 対象月（1-12）
+          minimum: 1
+          maximum: 12
+        saleTarget:
+          type: integer
+          description: 売上目標
+        saleResult:
+          type: integer
+          description: 売上実績
+
+    Profit:
+      type: object
+      properties:
+        profitId:
+          type: string
+          description: 利益ID（UUID）
+        userId:
+          type: string
+          description: ユーザーID（UUID）
+        year:
+          type: integer
+          description: 対象年
+        month:
+          type: integer
+          description: 対象月（1-12）
+          minimum: 1
+          maximum: 12
+        profitTarget:
+          type: integer
+          description: 利益目標
+        profitResult:
+          type: integer
+          description: 利益実績
+
+    NetAsset:
+      type: object
+      properties:
+        netAssetId:
+          type: string
+          description: 純利益ID（UUID）
+        userId:
+          type: string
+          description: ユーザーID（UUID）
+        year:
+          type: integer
+          description: 対象年
+        netAssetTarget:
+          type: integer
+          description: 純利益目標
+        netAssetResult:
+          type: integer
+          description: 純利益実績
+
+    TaxAccountantComment:
+      type: object
+      properties:
+        taxAccountantCommentId:
+          type: string
+          description: 税理士コメントID（UUID）
+        userId:
+          type: string
+          description: ユーザーID（UUID）
+        year:
+          type: integer
+          description: 対象年
+        month:
+          type: integer
+          description: 対象月（1-12）
+          minimum: 1
+          maximum: 12
+        comment:
+          type: string
+          description: コメント内容
+          maxLength: 1024
+        commentFlg:
+          type: string
+          description: コメント済フラグ（0:コメント未実施、1:コメント実施済）
+
+    CommentHistory:
+      type: object
+      properties:
+        commentId:
+          type: string
+          description: コメントID（UUID）
+        comment:
+          type: string
+          description: コメント内容
+          maxLength: 1024
+        commentDate:
+          type: string
+          description: コメント日付
+          format: date-time
+
+    AdminUserInfo:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ユーザーID
+        userName:
+          type: string
+          description: ユーザー名
+        email:
+          type: string
+          description: メールアドレス
+        businessName:
+          type: string
+          description: 事業者名
+        lastUpdated:
+          type: string
+          description: 最終更新日時
+          format: date-time
+        fiscalYearEndMonth:
+          type: integer
+          description: 決算月（1-12）
+          minimum: 1
+          maximum: 12
+        lastMonthSalesTarget:
+          type: integer
+          description: 先月の売上目標
+        lastMonthSalesActual:
+          type: integer
+          description: 先月の売上実績
+        lastMonthSalesAchievementRate:
+          type: number
+          description: 先月の売上達成率
+          format: float
+        lastMonthProfitTarget:
+          type: integer
+          description: 先月の利益目標
+        lastMonthProfitActual:
+          type: integer
+          description: 先月の利益実績
+        lastMonthProfitAchievementRate:
+          type: number
+          description: 先月の利益達成率
+          format: float
+        currentMonthSalesTarget:
+          type: integer
+          description: 今月の売上目標
+        currentMonthSalesActual:
+          type: integer
+          description: 今月の売上実績
+        currentMonthSalesAchievementRate:
+          type: number
+          description: 今月の売上達成率
+          format: float
+        currentMonthProfitTarget:
+          type: integer
+          description: 今月の利益目標
+        currentMonthProfitActual:
+          type: integer
+          description: 今月の利益実績
+        currentMonthProfitAchievementRate:
+          type: number
+          description: 今月の利益達成率
+          format: float
+        yearOverYearComparison:
+          type: number
+          description: 前年同月比
+          format: float
+        cumulativeAchievementRate:
+          type: number
+          description: 累計達成率
+          format: float
+        hasComment:
+          type: boolean
+          description: コメントの有無
+        comment:
+          type: string
+          description: コメント内容
+        commentDate:
+          type: string
+          description: コメント日付
+          format: date-time
+        commentHistory:
+          type: array
+          description: コメント履歴
+          items:
+            $ref: "#/components/schemas/CommentHistory"
