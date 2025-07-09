@@ -28,7 +28,7 @@ WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # 必要ポートを開放（アプリが 8081 で起動するなら）
-EXPOSE 8081
+EXPOSE 8080
 
 # JVM オプションは環境変数経由で渡されるので、シンプルに実行
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,4 +1,4 @@
-package com.example.Mietoru_Back.config;
+package com.example.Product_Back.config;
 
 import java.util.List;
 

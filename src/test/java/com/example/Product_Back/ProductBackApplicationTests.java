@@ -1,10 +1,10 @@
-package com.example.Mietoru_Back;
+package com.example.Product_Back;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MietoruBackApplicationTests {
+class ProductBackApplicationTests {
 
 	@Test
 	void contextLoads() {
