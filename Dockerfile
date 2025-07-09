@@ -27,7 +27,7 @@ WORKDIR /app
 # builder からビルド済み jar をコピー
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# 必要ポートを開放（アプリが 8081 で起動するなら）
+# 必要ポートを開放（アプリが 8080 で起動するなら）
 EXPOSE 8080
 
 # JVM オプションは環境変数経由で渡されるので、シンプルに実行

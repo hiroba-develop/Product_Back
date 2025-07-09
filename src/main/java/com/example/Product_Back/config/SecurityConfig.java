@@ -34,11 +34,11 @@ public class SecurityConfig {
 		CorsConfiguration configuration = new CorsConfiguration();
 		// 本番環境とローカル環境のオリジンを明示的に指定
 		configuration.setAllowedOrigins(List.of(
-				"https://mietoru.com",
-				"http://mietoru.com",
-				"http://13.114.155.51:5174",
-				"http://35.74.40.37:5174",
-				"http://localhost:5174"));
+				"https://product.com",
+				"http://product.com",
+				"http://13.114.155.51:5173",
+				"http://35.74.40.37:5173",
+				"http://localhost:5173"));
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("*"));
 		configuration.setAllowCredentials(true);
